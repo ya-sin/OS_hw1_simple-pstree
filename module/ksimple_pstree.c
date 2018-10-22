@@ -38,12 +38,34 @@ void sendnlmsg(int pid)
 
     netlink_unicast(nl_sk, skb, pid, MSG_DONTWAIT);
 }
+void find_parent( int pidNum )
+{
+    pid_t pid = pidNum;
+    //module_param(pid,int,0644);
+    struct task_struct *p;
+    struct list_head *pp="";// why need to initilized
+    struct task_struct *psibling;
+
+    p = pid_task(find_vpid(pid), PIDTYPE_PID);
+    printk("me: %d %s\n", p->pid, p->comm);
+
+    while(p->parent->pid != 0) {
+        // 父进程
+        if(p->parent == NULL) {
+            printk("No Parent\n");
+        } else {
+
+            printk("Parent: %d %s\n", p->parent->pid, p->parent->comm);
+        }
+        p = p->parent;
+    }
+}
 void find_child( int pidNum )
 {
     pid_t pid = pidNum;
     //module_param(pid,int,0644);
     struct task_struct *p;
-    struct list_head *pp = "";// why need to initilized
+    struct list_head *pp="";// why need to initilized
     struct task_struct *psibling;
 
 
@@ -53,6 +75,8 @@ void find_child( int pidNum )
     list_for_each(pp, &p->children) {
         psibling = list_entry(pp, struct task_struct, sibling);
         printk("\t%s(%d)\n", psibling->comm, psibling->pid);
+        if(!list_empty(&psibling->children))
+            find_child(psibling->pid);
     }
 }
 void find_sibling(int pidNum)
@@ -60,7 +84,7 @@ void find_sibling(int pidNum)
     pid_t pid = pidNum;
     //module_param(pid,int,0644);
     struct task_struct *p;
-    struct list_head *pp = "";// why need to initilized
+    struct list_head *pp="";// why need to initilized
     struct task_struct *psibling;
 
 
@@ -132,10 +156,13 @@ void nl_data_ready(struct sk_buff *__skb)
         }
         break;
     case 'p':
-        if(str[2])
+        if(str[2]) {
             mode = 5;
-        else
+            find_parent(pid);
+        } else {
             mode = 4;
+            find_parent(current->pid);
+        }
         break;
     default:
         if(str[0] == '\0') {
