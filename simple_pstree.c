@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
     struct msghdr msg;
     int sock_fd, retval;
     int state_smg = 0;
-    char info[] = "c 56";
+    char info[] = "s";
 
 
     // Create a socket

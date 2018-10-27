@@ -43,7 +43,7 @@ void find_parent( int pidNum )
     pid_t pid = pidNum;
     //module_param(pid,int,0644);
     struct task_struct *p;
-    struct list_head *pp="";// why need to initilized
+    struct list_head *pp;// why need to initilized
     struct task_struct *psibling;
 
     p = pid_task(find_vpid(pid), PIDTYPE_PID);
@@ -65,7 +65,7 @@ void find_child( int pidNum )
     pid_t pid = pidNum;
     //module_param(pid,int,0644);
     struct task_struct *p;
-    struct list_head *pp="";// why need to initilized
+    struct list_head *pp;// why need to initilized
     struct task_struct *psibling;
 
 
@@ -84,7 +84,7 @@ void find_sibling(int pidNum)
     pid_t pid = pidNum;
     //module_param(pid,int,0644);
     struct task_struct *p;
-    struct list_head *pp="";// why need to initilized
+    struct list_head *pp;// why need to initilized
     struct task_struct *psibling;
 
 
@@ -102,6 +102,8 @@ void nl_data_ready(struct sk_buff *__skb)
 {
     struct sk_buff *skb;
     struct nlmsghdr *nlh;
+    char M[1];
+    int test;
     char str[100] = "";
     int mode = 0;
     int pid = 4681;
@@ -129,13 +131,22 @@ void nl_data_ready(struct sk_buff *__skb)
         sendnlmsg(nlh->nlmsg_pid);
         kfree_skb(skb);
     }
+    sscanf(str,"%s%d",M,&test);
+    // ret = simple_strtoul(str, &ptr, 10);
+    printk("%d",M[0]);
+    printk("%d",test);
+    if(test<0)
+        test = 0;
+    printk("%d\n",test);
+    // rintk("%c\n",str+2);
+    // simple_strtoul(str+2,&(str+5),10);
     // mode = 0 -> default/-c
     // mode = 1 -> -c+pid
     // mode = 2 -> -s
     // mode = 3 -> -s+pid
     // mode = 4 -> -p
     // mode = 5 => -p+pid
-    switch(str[0]) {
+    switch(M[0]) {
     case 'c':
         if(str[2]) {
             //kstrtol(str+2, 10, PID);
