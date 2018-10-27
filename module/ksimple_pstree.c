@@ -7,6 +7,7 @@
 #include <net/sock.h>
 #include <net/netlink.h>
 #include<linux/kernel.h>
+// #include <linux/string.h>
 // #include <linux/moduleparam.h>
 
 #define NETLINK_TEST 25
@@ -20,7 +21,6 @@ void sendnlmsg(int pid)
 {
     struct sk_buff *skb;
     struct nlmsghdr *nlh;
-
     char msg[30] = "Say hello from kernel!";
 
     if(!nl_sk) {
@@ -43,7 +43,7 @@ void find_parent( int pidNum )
     pid_t pid = pidNum;
     //module_param(pid,int,0644);
     struct task_struct *p;
-    struct list_head *pp;// why need to initilized
+    struct list_head *pp="";// why need to initilized
     struct task_struct *psibling;
 
     p = pid_task(find_vpid(pid), PIDTYPE_PID);
@@ -65,9 +65,8 @@ void find_child( int pidNum )
     pid_t pid = pidNum;
     //module_param(pid,int,0644);
     struct task_struct *p;
-    struct list_head *pp;// why need to initilized
+    struct list_head *pp="";// why need to initilized
     struct task_struct *psibling;
-
 
     p = pid_task(find_vpid(pid), PIDTYPE_PID);
     printk("%s(%d)\n", p->comm, p->pid);
@@ -84,7 +83,7 @@ void find_sibling(int pidNum)
     pid_t pid = pidNum;
     //module_param(pid,int,0644);
     struct task_struct *p;
-    struct list_head *pp;// why need to initilized
+    struct list_head *pp="";// why need to initilized
     struct task_struct *psibling;
 
 
@@ -102,11 +101,10 @@ void nl_data_ready(struct sk_buff *__skb)
 {
     struct sk_buff *skb;
     struct nlmsghdr *nlh;
-    char M[1];
-    int test;
-    char str[100] = "";
+    char str[100]="";
     int mode = 0;
-    int pid = 4681;
+    int i = 2;
+    int pid = 0;
     // get current pid
     // struct pid* cur_pid = find_get_pid(current->pid);
     // struct task_struct* cur_task = pid_task(cur_pid, PIDTYPE_PID);
@@ -131,14 +129,18 @@ void nl_data_ready(struct sk_buff *__skb)
         sendnlmsg(nlh->nlmsg_pid);
         kfree_skb(skb);
     }
-    sscanf(str,"%s%d",M,&test);
-    // ret = simple_strtoul(str, &ptr, 10);
-    printk("%d",M[0]);
-    printk("%d",test);
-    if(test<0)
-        test = 0;
-    printk("%d\n",test);
-    // rintk("%c\n",str+2);
+
+    // while(str[i] != '\0'){
+    //     number = number*10+str[i]-'0';
+    // }
+    while(str[i]!='\0') {
+        pid = pid*10+str[i]-'0';
+        i = i +1;
+    }
+    printk("Netlink: pid is %d\n",pid);
+
+    // number = strlen(str);
+    // printk("str: %s\n",str);
     // simple_strtoul(str+2,&(str+5),10);
     // mode = 0 -> default/-c
     // mode = 1 -> -c+pid
@@ -146,7 +148,7 @@ void nl_data_ready(struct sk_buff *__skb)
     // mode = 3 -> -s+pid
     // mode = 4 -> -p
     // mode = 5 => -p+pid
-    switch(M[0]) {
+    switch(str[0]) {
     case 'c':
         if(str[2]) {
             //kstrtol(str+2, 10, PID);
@@ -155,6 +157,7 @@ void nl_data_ready(struct sk_buff *__skb)
         } else {
             mode = 0;
             find_child(1);
+            printk("Netlink: hQQ2");
         }
         break;
     case 's':
@@ -185,7 +188,7 @@ void nl_data_ready(struct sk_buff *__skb)
     // printf("%s\n",pid);
     // printf("%d\n",mode);
 
-    printk("Message received mode:%d\n",mode);
+    printk("Netlink: Message received mode:%d\n",mode);
     // for_each_process(p){
     //     if(p->mm == NULL)
     //         printk(KERN_ALERT"name: %s\tpid: %d\n",p->comm,p->pid);
