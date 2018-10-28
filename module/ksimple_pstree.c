@@ -43,7 +43,7 @@ void find_parent( int pidNum )
     pid_t pid = pidNum;
     //module_param(pid,int,0644);
     struct task_struct *p;
-    struct list_head *pp;// why need to initilized
+    struct list_head *pp=NULL;// why need to initilized
     struct task_struct *psibling;
 
     p = pid_task(find_vpid(pid), PIDTYPE_PID);
@@ -65,7 +65,7 @@ void find_child( int pidNum )
     pid_t pid = pidNum;
     //module_param(pid,int,0644);
     struct task_struct *p;
-    struct list_head *pp;// why need to initilized
+    struct list_head *pp=NULL;// why need to initilized
     struct task_struct *psibling;
 
 
@@ -84,7 +84,7 @@ void find_sibling(int pidNum)
     pid_t pid = pidNum;
     //module_param(pid,int,0644);
     struct task_struct *p;
-    struct list_head *pp;// why need to initilized
+    struct list_head *pp=NULL;// why need to initilized
     struct task_struct *psibling;
 
 
@@ -104,7 +104,7 @@ void nl_data_ready(struct sk_buff *__skb)
     struct nlmsghdr *nlh;
     char M[1];
     int test;
-    char str[100] = "";
+    char str[100];
     int mode = 0;
     int pid = 4681;
     // get current pid
@@ -131,13 +131,14 @@ void nl_data_ready(struct sk_buff *__skb)
         sendnlmsg(nlh->nlmsg_pid);
         kfree_skb(skb);
     }
-    sscanf(str,"%s%d",M,&test);
+    //printk("this %s",str);
+    sscanf("c1234","%s %d",M,&test);
     // ret = simple_strtoul(str, &ptr, 10);
-    printk("%d",M[0]);
+    printk("Hi%s",M);
     printk("%d",test);
-    if(test<0)
-        test = 0;
-    printk("%d\n",test);
+    // if(test<0)
+    //     test = 0;
+    // printk("%d\n",test);
     // rintk("%c\n",str+2);
     // simple_strtoul(str+2,&(str+5),10);
     // mode = 0 -> default/-c
@@ -147,7 +148,7 @@ void nl_data_ready(struct sk_buff *__skb)
     // mode = 4 -> -p
     // mode = 5 => -p+pid
     switch(M[0]) {
-    case 'c':
+    case 99:
         if(str[2]) {
             //kstrtol(str+2, 10, PID);
             mode = 1;
@@ -157,7 +158,7 @@ void nl_data_ready(struct sk_buff *__skb)
             find_child(1);
         }
         break;
-    case 's':
+    case 115:
         if(str[2]) {
             mode = 3;
             find_sibling(pid);
@@ -166,7 +167,7 @@ void nl_data_ready(struct sk_buff *__skb)
             find_sibling(current->pid);
         }
         break;
-    case 'p':
+    case 112:
         if(str[2]) {
             mode = 5;
             find_parent(pid);
