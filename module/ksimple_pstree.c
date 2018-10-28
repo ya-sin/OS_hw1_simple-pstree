@@ -7,12 +7,14 @@
 #include <net/sock.h>
 #include <net/netlink.h>
 #include<linux/kernel.h>
+// #include <linux/string.h>
 // #include <linux/moduleparam.h>
 
 #define NETLINK_TEST 25
-#define MAX_PAYLOAD_SIZE 1024
+#define MAX_PAYLOAD_SIZE 15000
 
 struct sock *nl_sk = NULL;
+char msg[15000]="";
 // static pid_t pid=482;
 // module_param(pid,int,0644);
 
@@ -20,8 +22,6 @@ void sendnlmsg(int pid)
 {
     struct sk_buff *skb;
     struct nlmsghdr *nlh;
-
-    char msg[30] = "Say hello from kernel!";
 
     if(!nl_sk) {
         return;
@@ -45,39 +45,90 @@ void find_parent( int pidNum )
     struct task_struct *p;
     struct list_head *pp=NULL;// why need to initilized
     struct task_struct *psibling;
+    int count[1000];
+    int i = 0;
+    int pidCount = 0;
+    int temp = 0;
 
+    memset(count,0,sizeof(count));
+    // while(i) {
+    //     count[i] = 0;
+    //     i = i-1;
+    // }
+    // count[0] = 0;
+    // i = 0;
     p = pid_task(find_vpid(pid), PIDTYPE_PID);
-    printk("me: %d %s\n", p->pid, p->comm);
-
     while(p->parent->pid != 0) {
         // 父进程
         if(p->parent == NULL) {
             printk("No Parent\n");
         } else {
-
-            printk("Parent: %d %s\n", p->parent->pid, p->parent->comm);
+            count[i] = p->parent->pid;
+            //printk("Parent: %d %s\n", p->parent->pid, p->parent->comm);
         }
+        i = i+1;
         p = p->parent;
     }
+    i = i-1;
+    while(i) {
+        p = pid_task(find_vpid(count[i]), PIDTYPE_PID);
+        temp = pidCount;
+        while(pidCount) {
+            //printk("\t");
+            sprintf(msg+strlen(msg),"\t");
+            pidCount = pidCount-1;
+        }
+        //printk("baby: %d %s\n", p->pid, p->comm);
+        sprintf(msg+strlen(msg),"%s(%d)\n",p->comm, p->pid);
+        i = i - 1;
+        pidCount = temp + 1;
+    }
+    temp = pidCount;
+    while(pidCount) {
+        //printk("\t");
+        sprintf(msg+strlen(msg),"\t");
+        pidCount = pidCount-1;
+    }
+    p = pid_task(find_vpid(count[0]), PIDTYPE_PID);
+    sprintf(msg+strlen(msg),"%s(%d)\n",p->comm, p->pid);
+    //printk("baby: %d %s\n", p->pid, p->comm);
+    pidCount = temp+1;
+    while(pidCount) {
+        //printk("\t");
+        //temp = pidCount;
+        sprintf(msg+strlen(msg),"\t");
+        pidCount = pidCount-1;
+    }
+    p = pid_task(find_vpid(pid), PIDTYPE_PID);
+    sprintf(msg+strlen(msg),"%s(%d)\n",p->comm, p->pid);
+    //printk("me: %d %s\n", p->pid, p->comm);
+
+    // printk("QQ %d\n",count[0]);
+    // printk("QQ %d\n",count[1]);
 }
-void find_child( int pidNum )
+void find_child( int pidNum, int tabNum )
 {
     pid_t pid = pidNum;
     //module_param(pid,int,0644);
     struct task_struct *p;
     struct list_head *pp=NULL;// why need to initilized
     struct task_struct *psibling;
-
+    int i = tabNum;
 
     p = pid_task(find_vpid(pid), PIDTYPE_PID);
-    printk("%s(%d)\n", p->comm, p->pid);
+    // printk("%s(%d)\n", p->comm, p->pid);
 
     list_for_each(pp, &p->children) {
         psibling = list_entry(pp, struct task_struct, sibling);
-        printk("\t%s(%d)\n", psibling->comm, psibling->pid);
+        while(i) {
+            printk("\t");
+            i = i-1;
+        }
+        printk("%s(%d)\n", psibling->comm, psibling->pid);
         if(!list_empty(&psibling->children))
-            find_child(psibling->pid);
+            find_child(psibling->pid,tabNum+1);
     }
+    return 0;
 }
 void find_sibling(int pidNum)
 {
@@ -86,15 +137,17 @@ void find_sibling(int pidNum)
     struct task_struct *p;
     struct list_head *pp=NULL;// why need to initilized
     struct task_struct *psibling;
-
+    // memset(msg,0,sizeof msg);
+    // delete [] msg;
 
     p = pid_task(find_vpid(pid), PIDTYPE_PID);
-    printk("%s(%d)\n", p->comm, p->pid);
+    printk("Netlink: %s(%d)\n", p->comm, p->pid);
 
     list_for_each(pp, &p->parent->children) {
         psibling = list_entry(pp, struct task_struct, sibling);
         if(psibling->pid != pidNum )
-            printk("%s(%d)\n", psibling->comm, psibling->pid);
+            sprintf(msg+strlen(msg),"%s(%d)\n",psibling->comm, psibling->pid);
+        // printk("%s(%d)\n", psibling->comm, psibling->pid);
     }
 
 }
@@ -102,11 +155,11 @@ void nl_data_ready(struct sk_buff *__skb)
 {
     struct sk_buff *skb;
     struct nlmsghdr *nlh;
-    char M[1];
-    int test;
-    char str[100];
+    struct task_struct *p;
+    char str[100]="";
     int mode = 0;
-    int pid = 4681;
+    int i = 2;
+    int pid = 0;
     // get current pid
     // struct pid* cur_pid = find_get_pid(current->pid);
     // struct task_struct* cur_task = pid_task(cur_pid, PIDTYPE_PID);
@@ -131,15 +184,18 @@ void nl_data_ready(struct sk_buff *__skb)
         sendnlmsg(nlh->nlmsg_pid);
         kfree_skb(skb);
     }
-    //printk("this %s",str);
-    sscanf("c1234","%s %d",M,&test);
-    // ret = simple_strtoul(str, &ptr, 10);
-    printk("Hi%s",M);
-    printk("%d",test);
-    // if(test<0)
-    //     test = 0;
-    // printk("%d\n",test);
-    // rintk("%c\n",str+2);
+
+    // while(str[i] != '\0'){
+    //     number = number*10+str[i]-'0';
+    // }
+    while(str[i]!='\0') {
+        pid = pid*10+str[i]-'0';
+        i = i +1;
+    }
+    printk("Netlink: pid is %d\n",pid);
+
+    // number = strlen(str);
+    // printk("str: %s\n",str);
     // simple_strtoul(str+2,&(str+5),10);
     // mode = 0 -> default/-c
     // mode = 1 -> -c+pid
@@ -147,15 +203,18 @@ void nl_data_ready(struct sk_buff *__skb)
     // mode = 3 -> -s+pid
     // mode = 4 -> -p
     // mode = 5 => -p+pid
-    switch(M[0]) {
-    case 99:
+    switch(str[0]) {
+    case 'c':
         if(str[2]) {
             //kstrtol(str+2, 10, PID);
             mode = 1;
-            find_child(pid);
+            find_child(pid,1);
         } else {
+            p = pid_task(find_vpid(1), PIDTYPE_PID);
+            printk("%s(%d)\n", p->comm, p->pid);
             mode = 0;
-            find_child(1);
+            find_child(1,1);
+            // printk("Netlink: hQQ2");
         }
         break;
     case 115:
@@ -178,7 +237,7 @@ void nl_data_ready(struct sk_buff *__skb)
         break;
     default:
         if(str[0] == '\0') {
-            find_child(1);
+            find_child(1,1);
             mode = 0;
         } else
             printk("doesn't exist!");
@@ -186,7 +245,8 @@ void nl_data_ready(struct sk_buff *__skb)
     // printf("%s\n",pid);
     // printf("%d\n",mode);
 
-    printk("Message received mode:%d\n",mode);
+    printk("Netlink: Message received mode:%d\n",mode);
+    printk("mesg: %s",msg);
     // for_each_process(p){
     //     if(p->mm == NULL)
     //         printk(KERN_ALERT"name: %s\tpid: %d\n",p->comm,p->pid);
