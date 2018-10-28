@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 #define NETLINK_TEST 25
-#define MAX_PAYLOAD_SIZE 1024 // maximum payload size
+#define MAX_PAYLOAD_SIZE 30000 // maximum payload size
 
 int main(int argc, char* argv[])
 {
@@ -20,9 +20,10 @@ int main(int argc, char* argv[])
     struct msghdr msg;
     int sock_fd, retval;
     int state_smg = 0;
-    char info[] = "s";
+    char info[20]="";
 
-
+    if(argv[1])
+        strcat(info,argv[1]);
     // Create a socket
     sock_fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_TEST);
     if(sock_fd == -1) {
@@ -43,7 +44,6 @@ int main(int argc, char* argv[])
         close(sock_fd);
         return -1;
     }
-    printf("user pid %d\n", getpid());
     // To prepare recvmsg
     nlh = (struct nlmsghdr *)malloc(NLMSG_SPACE(MAX_PAYLOAD_SIZE));
     if(!nlh) {
@@ -78,7 +78,6 @@ int main(int argc, char* argv[])
     }
 
     memset(nlh, 0, NLMSG_SPACE(MAX_PAYLOAD_SIZE));
-    printf("waiting received!\n");
     // Read message from kernel
     state = recvmsg(sock_fd, &msg, 0);
     if(state < 0) {
