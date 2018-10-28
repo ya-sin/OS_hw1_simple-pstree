@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
     if(state < 0) {
         printf("recvmsg state < 1");
     }
-    printf("Received message: %s\n",(char *) NLMSG_DATA(nlh));
+    printf("%s\n",(char *) NLMSG_DATA(nlh));
     close(sock_fd);
 
     return 0;

@@ -47,7 +47,7 @@ void find_parent( int pidNum )
     struct task_struct *psibling;
     int count[1000];
     int i = 999;
-    int pidCount = 10;
+    int pidCount = 1;
 
     while(i) {
         count[i] = 0;
@@ -56,7 +56,6 @@ void find_parent( int pidNum )
     count[0] = 0;
     i = 0;
     p = pid_task(find_vpid(pid), PIDTYPE_PID);
-    printk("me: %d %s\n", p->pid, p->comm);
     while(p->parent->pid != 0) {
         // 父进程
         if(p->parent == NULL) {
@@ -68,11 +67,30 @@ void find_parent( int pidNum )
         i = i+1;
         p = p->parent;
     }
-    while(pidCount) {
-        p = pid_task(find_vpid(count[pidCount]), PIDTYPE_PID);
-        printk("baby: %d %s\n", p->pid, p->comm);
-        pidCount = pidCount - 1;
+    i = i-1;
+    while(i) {
+        p = pid_task(find_vpid(count[i]), PIDTYPE_PID);
+        while(pidCount) {
+            //printk("\t");
+            sprintf(msg+strlen(msg),"\t");
+            pidCount = pidCount-1;
+        }
+        //printk("baby: %d %s\n", p->pid, p->comm);
+        sprintf(msg+strlen(msg),"%s(%d)\n",p->comm, p->pid);
+        i = i - 1;
+        pidCount = pidCount + 1;
     }
+    while(pidCount) {
+        //printk("\t");
+        sprintf(msg+strlen(msg),"\t");
+        pidCount = pidCount-1;
+    }
+    p = pid_task(find_vpid(count[0]), PIDTYPE_PID);
+    sprintf(msg+strlen(msg),"%s(%d)\n",p->comm, p->pid);
+    //printk("baby: %d %s\n", p->pid, p->comm);
+    p = pid_task(find_vpid(pid), PIDTYPE_PID);
+    sprintf(msg+strlen(msg),"%s(%d)\n",p->comm, p->pid);
+    //printk("me: %d %s\n", p->pid, p->comm);
 
     // printk("QQ %d\n",count[0]);
     // printk("QQ %d\n",count[1]);
