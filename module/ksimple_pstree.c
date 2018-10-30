@@ -37,9 +37,8 @@ void find_parent( int pidNum )
 {
     pid_t pid = pidNum;
     struct task_struct *p;
-    struct list_head *pp=NULL;
-    int count[1000];
-    int i = 999;
+    int count[100];
+    int i = 99;
     int pidCount = 0;
     int temp;
     // init
@@ -155,71 +154,70 @@ void nl_data_ready(struct sk_buff *__skb)
     int i = 2;
     int pid = 0;
 
-    // get message(str[]) from user
+
     skb = skb_get (__skb);
     if(skb->len >= NLMSG_SPACE(0)) {
         nlh = nlmsg_hdr(skb);
-
+        // get message(str[]) from user
         memcpy(str, NLMSG_DATA(nlh), sizeof(str));
+        //convert string pid to int pid
+        while(str[i]!='\0') {
+            pid = pid*10+str[i]-'0';
+            i = i +1;
+        }
+
+        // clear the msg[]
+        memset(msg,0,sizeof msg);
+
+        // mode = 0 -> default/-c
+        // mode = 1 -> -c+pid
+        // mode = 2 -> -s
+        // mode = 3 -> -s+pid
+        // mode = 4 -> -p
+        // mode = 5 => -p+pid
+        switch(str[1]) {
+        case 'c':
+            if(str[2]) {
+                // mode = 1;
+                p = pid_task(find_vpid(pid), PIDTYPE_PID);
+                sprintf(msg+strlen(msg),"%s(%d)\n",p->comm, p->pid);
+                find_child(pid,1);
+            } else {
+                // mode = 0;
+                p = pid_task(find_vpid(1), PIDTYPE_PID);
+                sprintf(msg+strlen(msg),"%s(%d)\n",p->comm, p->pid);
+                find_child(1,1);
+            }
+            break;
+        case 's':
+            if(str[2]) {
+                // mode = 3;
+                find_sibling(pid);
+            } else {
+                // mode = 2;
+                find_sibling(current->pid);
+            }
+            break;
+        case 'p':
+            if(str[2]) {
+                // mode = 5;
+                find_parent(pid);
+            } else {
+                // mode = 4;
+                find_parent(current->pid);
+            }
+            break;
+        default:
+            if(str[0] == '\0') {
+                // mode = 0;
+                p = pid_task(find_vpid(1), PIDTYPE_PID);
+                sprintf(msg+strlen(msg),"%s(%d)\n",p->comm, p->pid);
+                find_child(1,1);
+            } else
+                sprintf(msg+strlen(msg),"doesn't exist!\n");
+        }
         sendnlmsg(nlh->nlmsg_pid);
         kfree_skb(skb);
-    }
-
-    //convert string pid to int pid
-    while(str[i]!='\0') {
-        pid = pid*10+str[i]-'0';
-        i = i +1;
-    }
-
-    // clear the msg[]
-    memset(msg,0,sizeof msg);
-
-    // mode = 0 -> default/-c
-    // mode = 1 -> -c+pid
-    // mode = 2 -> -s
-    // mode = 3 -> -s+pid
-    // mode = 4 -> -p
-    // mode = 5 => -p+pid
-    switch(str[1]) {
-    case 'c':
-        if(str[2]) {
-            // mode = 1;
-            p = pid_task(find_vpid(pid), PIDTYPE_PID);
-            sprintf(msg+strlen(msg),"%s(%d)\n",p->comm, p->pid);
-            find_child(pid,1);
-        } else {
-            // mode = 0;
-            p = pid_task(find_vpid(1), PIDTYPE_PID);
-            sprintf(msg+strlen(msg),"%s(%d)\n",p->comm, p->pid);
-            find_child(1,1);
-        }
-        break;
-    case 's':
-        if(str[2]) {
-            // mode = 3;
-            find_sibling(pid);
-        } else {
-            // mode = 2;
-            find_sibling(current->pid);
-        }
-        break;
-    case 'p':
-        if(str[2]) {
-            // mode = 5;
-            find_parent(pid);
-        } else {
-            // mode = 4;
-            find_parent(current->pid);
-        }
-        break;
-    default:
-        if(str[0] == '\0') {
-            // mode = 0;
-            p = pid_task(find_vpid(1), PIDTYPE_PID);
-            sprintf(msg+strlen(msg),"%s(%d)\n",p->comm, p->pid);
-            find_child(1,1);
-        } else
-            sprintf(msg+strlen(msg),"doesn't exist!\n");
     }
 }
 
