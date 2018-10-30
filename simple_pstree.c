@@ -22,6 +22,7 @@ int main(int argc, char* argv[])
     int state_smg = 0;
     char info[20]="";
 
+    //store argv[1] to info[],info[] will be sent to kernel
     if(argv[1])
         strcat(info,argv[1]);
     // Create a socket
@@ -83,6 +84,7 @@ int main(int argc, char* argv[])
     if(state < 0) {
         printf("recvmsg state < 1");
     }
+    // print the meaasge from kernel
     printf("%s\n",(char *) NLMSG_DATA(nlh));
     close(sock_fd);
 
