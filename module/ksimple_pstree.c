@@ -175,7 +175,7 @@ void nl_data_ready(struct sk_buff *__skb)
         // mode = 3 -> -s+pid
         // mode = 4 -> -p
         // mode = 5 => -p+pid
-        switch(str[1]) {
+        switch(str[0]) {
         case 'c':
             if(str[2]) {
                 // mode = 1;

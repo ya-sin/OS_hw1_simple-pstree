@@ -21,10 +21,12 @@ int main(int argc, char* argv[])
     int sock_fd, retval;
     int state_smg = 0;
     char info[20]="";
+    char *arg = argv[1];
 
-    //store argv[1] to info[],info[] will be sent to kernel
-    if(argv[1])
-        strcat(info,argv[1]);
+    if(argv[1]) {
+        sprintf(info,"%c %s",arg[1],arg+2);
+    }
+
     // Create a socket
     sock_fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_TEST);
     if(sock_fd == -1) {
